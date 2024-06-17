@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Task Manager</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script th:src="@{/script/script.js}"></script>
+</head>
+<body>
+<div class="container">
+    <h1 class="title">Task Manager</h1>
+    <a class="button" id="newGroupButton">Add Group</a>
+    <table class="task-table">
+        <tbody th:each="taskGroup : ${taskGroupList}" class="task-group-body" th:attr="data-group-id=${taskGroup.id}">
+        <tr>
+            <td colspan="6">
+                <div class="group-header">
+                    <span class="group-name" th:text="${taskGroup.name}">Group Name</span>
+                    <div class="group-progress-container">
+                        <progress th:value="${taskGroup.completedPercentage}" max="100"></progress>
+                        <span th:text="${taskGroup.completedPercentage} + '%'"></span>
+                    </div>
+                    <div class="task-actions">
+                        <a class="button-icon button create-task-button" th:attr="data-group-id=${taskGroup.id}">
+                            <i class="fas fa-plus"></i>
+                        </a>
+                        <a class="button-icon button delete-button" th:data-id="${taskGroup.id}"
+                           th:data-name="${taskGroup.name}">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div th:id="'deleteModal_' + ${taskGroup.id}" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <p id="modalText"></p>
+                        <form th:attr="id='deleteForm_' + ${taskGroup.id}" th:action="@{/groups/delete}" method="post">
+                            <input type="hidden" th:attr="id='groupId_' + ${taskGroup.id}" name="groupId"
+                                   th:value="${taskGroup.id}">
+                            <input type="hidden" th:attr="id='hiddenDeleteTasks_' + ${taskGroup.id}" name="deleteTasks"
+                                   value="false">
+                            <label>
+                                <input type="checkbox" th:attr="id='deleteTasks_' + ${taskGroup.id}" name="deleteTasks"
+                                       value="true">
+                                Delete tasks in the group
+                            </label>
+                            <br><br>
+                            <button type="submit" class="button">Confirm</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div th:id="'createTaskModal_' + ${taskGroup.id}" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <form th:attr="id='createTaskForm_' + ${taskGroup.id}"
+                              th:action="@{/tasks/createTask/{groupId}(groupId=${taskGroup.id})}" method="post">
+                            <div class="form-group">
+                                <label th:for="'name_' + ${taskGroup.id}">Name:</label>
+                                <input type="text" th:id="'name_' + ${taskGroup.id}" name="name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label th:for="'description_' + ${taskGroup.id}">Description:</label>
+                                <input type="text" th:id="'description_' + ${taskGroup.id}" name="description"
+                                       class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label th:for="'priority_' + ${taskGroup.id}">Priority:</label>
+                                <select th:id="'priority_' + ${taskGroup.id}" name="priority" class="form-control">
+                                    <option value="1">High</option>
+                                    <option value="2">Medium</option>
+                                    <option value="3">Low</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label th:for="'dueDate_' + ${taskGroup.id}">Due Date:</label>
+                                <input type="date" th:id="'dueDate_' + ${taskGroup.id}" name="dueDate" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+        <tr th:each="task : ${taskGroup.tasks}" class="task-row">
+            <td class="task-status">
+                <div class="task-checkbox-container">
+                    <input type="checkbox" class="task-checkbox" th:id="'completed_' + ${task.id}"
+                           th:checked="${task.completed}" th:data-task-id="${task.id}">
+                </div>
+            </td>
+            <td th:text="${task.name}">Task Name</td>
+            <td th:text="${task.description}">Description</td>
+            <td th:text="${task.dueDate}">Due Date</td>
+            <td th:text="${task.priority}">Priority</td>
+            <td class="task-actions">
+                <a class="button-icon button" th:href="@{/tasks/{id}/edit(id=${task.id})}">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a class="button-icon button" th:href="@{/tasks/{id}/delete(id=${task.id})}">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </td>
+        </tr>
+        </tbody>
+
+        <tbody class="ungrouped-tasks task-group-body" th:attr="data-group-id=${0}"> <!-- ungroup tasks -->
+        <tr>
+            <td colspan="6">
+                <div class="group-header">
+                    <span class="group-name">Ungrouped tasks</span>
+                    <button class="button create-task-button" th:attr="data-group-id=${0}">Create Task</button>
+                </div>
+                <div id="createTaskModal_0" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <form id="createTaskForm_0" th:action="@{/tasks/createTask/0}" method="post">
+                            <div class="form-group">
+                                <label for="name_0">Name:</label>
+                                <input type="text" id="name_0" name="name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="description_0">Description:</label>
+                                <input type="text" id="description_0" name="description" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr th:each="task : ${unGroupedTasks}" class="task-row">
+            <td>
+                <div class="task-checkbox-container task-status">
+                    <input type="checkbox" class="task-checkbox" th:id="'completed_' + ${task.id}"
+                           th:checked="${task.completed}" th:data-task-id="${task.id}">
+                </div>
+            </td>
+            <td th:text="${task.name}">Task Name</td>
+            <td th:text="${task.description}">Description</td>
+            <td th:text="${task.dueDate}">Due Date</td>
+            <td th:text="${task.priority}">Priority</td>
+            <td class="task-actions">
+                <a class="button" th:href="@{/tasks/{id}/edit(id=${task.id})}">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a class="button" th:href="@{/tasks/{id}/delete(id=${task.id})}">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+<div id="popup" class="popup">
+    <div class="popup-content">
+        <span class="close-button" id="closePopup">&times;</span>
+        <h2>Create Group</h2>
+        <form id="groupForm">
+            <label for="groupName">Group Name:</label>
+            <input type="text" id="groupName" name="groupName" required>
+            <button type="button" id="createButton">Create</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
